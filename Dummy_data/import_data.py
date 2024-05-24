@@ -14,6 +14,7 @@ Episodes_const = 50
 Cuis_const = 20
 Equip_const = 20
 Theme_const = 15
+Tag_const = 15
 script = ""
 
 chef_profession_provider = DynamicProvider (
@@ -47,7 +48,11 @@ for id in range(1,Recipes_const+1):
     carbs = random.randint(10, 500)
     fat = random.randint(5,200)
     protein = random.randint(3,60)
-    cuis_id = random.randint(1, Cuis_const)
+    # every cuisine has a recipe
+    if id < Cuis_const + 1:
+        cuis_id = Cuis_const + 1 - id
+    else:
+        cuis_id = random.randint(1, Cuis_const)
     image = fake.image_url()
     image_desc = fake.text(max_nb_chars=150)
     
@@ -67,6 +72,10 @@ for id in range(1, Recipes_const+1):
         step_id += 1
         script += f'INSERT INTO steps (recipe_id, step) VALUES ({id}, "{step}");\n'
 
+tag_id = 0
+for id in range(1, Tag_const+1):
+    tag = fake.word()
+    script += f'INSERT INTO tags (tag) VALUES ("{tag}");\n'
 
 #################################################################
 
@@ -184,11 +193,15 @@ for id in range(1, Users_const+1):
         dupl.append(n)
         cuis_chef[n-1].append(id)
         script += f'INSERT INTO chef_cuisine (user_id, cuisine_id) VALUES ({id}, {n});\n'
-        
+
+
 entry_id = 0
-judge_id = 0
 ep_year = 2017
 Chefs = [[] for j in range(Episodes_const)]
+Cuis = [[] for j in range(Episodes_const)]
+Rec = [[] for j in range(Episodes_const)]
+Judg = [[] for j in range(Episodes_const)]
+
 for id in range(1, Episodes_const+1):
     if (id % 10 == 1):
         ep_year += 1
@@ -197,47 +210,58 @@ for id in range(1, Episodes_const+1):
     
     script += f'INSERT INTO episode (ep_year, episode_image, image_description) VALUES ({ep_year},"{image}", "{image_desc}");\n'
     
-    ep_judges = []
+
     for i in range(3):
         n = random.randint(1, Users_const)
-        while n in ep_judges:
-            n = random.randint(1, Users_const)
-        ep_judges.append(n)
-        judge_id += 1
+        if id > 4:
+            while n in Judg[id-1] or (n in Judg[id-2] and n in Judg[id-3] and n in Judg[id-4]):
+                n = random.randint(1, Users_const)
+        else:
+            while n in Judg[id-1]:
+                n = random.randint(1, Users_const)
+        Judg[id-1].append(n)
+    
         script += f'INSERT INTO judges (episode_id, user_id) VALUES ({id}, {n});\n'
     
-    Cuis = []
-    Rec = []
     for i in range(10):
         cuis = random.randint(1, Cuis_const)
-        while cuis in Cuis:
-            cuis = random.randint(1, Cuis_const)
-        Cuis.append(cuis)
+        if id > 4:
+            while cuis in Cuis[id-1] or (cuis in Cuis[id-2] and cuis in Cuis[id-3] and cuis in Cuis[id-4]):
+                cuis = random.randint(1, Cuis_const)
+        else:
+            while cuis in Cuis[id-1]:
+                cuis = random.randint(1, Cuis_const)
+        Cuis[id-1].append(cuis)
         
         recipe = random.choice(cuis_rec[cuis-1])
-        while recipe in Rec:
-            recipe = random.choice(cuis_rec[cuis-1])
-        Rec.append(recipe)
+        if id > 4:
+            while recipe in Rec[id-1] or (recipe in Rec[id-2] and recipe in Rec[id-3] and recipe in Rec[id-4]):
+                recipe = random.choice(cuis_rec[cuis-1])
+        else:
+            while recipe in Rec[id-1]:
+                recipe = random.choice(cuis_rec[cuis-1])
+        Rec[id-1].append(recipe)
         
         chef = random.choice(cuis_chef[cuis-1])
         if id > 4:
-            while chef in Chefs[id-1] or chef in ep_judges or (chef in Chefs[id-2] and chef in Chefs[id-3] and chef in Chefs[id-4]):
+            while chef in Chefs[id-1] or chef in Judg[id-1] or (chef in Chefs[id-2] and chef in Chefs[id-3] and chef in Chefs[id-4]):
                 chef = random.choice(cuis_chef[cuis-1])
         else:
-            while chef in Chefs[id-1] or chef in ep_judges:
+            while chef in Chefs[id-1] or chef in Judg[id-1]:
                 chef = random.choice(cuis_chef[cuis-1])
         Chefs[id-1].append(chef)
         
         entry_id += 1
         script += f'INSERT INTO episode_entry (episode_id, recipe_id, cuisine_id, user_id) VALUES ({id}, {recipe}, {cuis}, {chef});\n'
+    
         for j in range(3):
-            script += f'INSERT INTO score (entry_id, judge_id, s_value) VALUES ({entry_id}, {ep_judges[j]}, {random.randint(1,5)});\n'
+            script += f'INSERT INTO score (entry_id, judge_id, s_value) VALUES ({entry_id}, {Judg[id-1][j]}, {random.randint(1,5)});\n'
     
     
 ################################################################
 
 for id in range(1, Recipes_const+1):
-    n = random.randint(2, Equip_const)
+    n = random.randint(2, 11)
     dupl = []
     for i in range(n):
         j = random.randint(1, Equip_const)
@@ -257,6 +281,17 @@ for id in range(1, Recipes_const+1):
             j = random.randint(1, Ingr_const)
         dupl.append(j)
         script += f'INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity) VALUES ({id}, {j}, "{q}");\n'
+
+for id in range(1, Recipes_const+1):
+    n = random.randint(1, 10)
+    dupl = []
+    for i in range(n):
+        j = random.randint(1, Tag_const)
+        while j in dupl:
+            j = random.randint(1, Tag_const)
+        dupl.append(j)
+        script += f'INSERT INTO recipe_tag (recipe_id, tag_id) VALUES ({id}, {j});\n'
+        
 
 with open("dummy_data.sql", "w") as f:
    f.write(script)
