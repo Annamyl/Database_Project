@@ -50,10 +50,8 @@ create table steps (
 
 create table tags (
 	tag_id int unsigned not null auto_increment,
-	recipe_id int unsigned not null,
-	tag varchar(45),
-	primary key (tag_id),
-	constraint fk_recipe_tags foreign key (recipe_id) references recipe (recipe_id) on delete cascade on update cascade
+	tag varchar(45) not null,
+	primary key (tag_id)
 );
 
 create table meal_type (
@@ -210,6 +208,14 @@ create table recipe_equipment (
 	constraint fk_equipment_rec foreign key (equipment_id) references equipment (equipment_id) on delete cascade on update cascade
 );
 
+create table recipe_tag (
+	recipe_id int unsigned not null,
+	tag_id int unsigned not null,
+	primary key (recipe_id, tag_id),
+	constraint fk_recipe_tag foreign key (recipe_id) references recipe (recipe_id) on delete cascade on update cascade,
+	constraint fk_tag_recipe foreign key (tag_id) references tags (tag_id) on delete cascade on update cascade
+);
+
 
 --------------Triggers------------------
 ----------------------------------------
@@ -255,6 +261,7 @@ end $$
 create trigger chk_chef_ep before insert on episode_entry
 for each row
 begin
+	if (new.episode_id %10 >=4 or new.episode_id% 10 = 0) then
 	if exists (select 1 from episode_entry where new.episode_id > 3 and episode_id = new.episode_id - 3 and user_id = new.user_id) then
 		if exists (select 1 from episode_entry where episode_id = new.episode_id - 2 and user_id = new.user_id) then
 			if exists (select 1 from episode_entry where episode_id = new.episode_id - 1 and user_id = new.user_id) then
@@ -262,6 +269,7 @@ begin
 				set message_text = 'Chef has already participated in three consecutive episodes.';
 			end if;
 		end if;
+	end if;
 	end if;
 end $$
 
