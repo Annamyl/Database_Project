@@ -1,6 +1,8 @@
 create or replace view sum_diff as 
 select e.episode_id, e.ep_year, sum(r.difficulty) as diff
-from recipe r join episode_entry e_e using(recipe_id) join episode e using(episode_id)
+from recipe r 
+inner join episode_entry e_e using(recipe_id) 
+inner join episode e using(episode_id)
 group by e.episode_id;
 
 

@@ -1,4 +1,3 @@
-
 select c.user_id, c.first_name, c.last_name, count(*) as ep_appearances
 from chefs c inner join episode_entry e using (user_id) 
 group by user_id

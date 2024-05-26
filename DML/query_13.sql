@@ -1,4 +1,4 @@
-create or replace view exp_value as
+create view if not exists exp_value as
 select c.*,
 (
     case

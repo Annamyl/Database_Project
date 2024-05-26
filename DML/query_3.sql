@@ -1,7 +1,9 @@
 select a.user_id, concat(a.first_name, ' ', a.last_name) as full_name, floor(datediff(now(), a.date_of_birth)/365) as age,
 (
     select count(*)
-    from chef_cuisine join cuisine using (cuisine_id) join recipe using (cuisine_id)
+    from chef_cuisine 
+    inner join cuisine using (cuisine_id) 
+    inner join recipe using (cuisine_id)
     where (user_id = a.user_id)
     group by (user_id)
 
