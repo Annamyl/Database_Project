@@ -1,12 +1,30 @@
-/* count total calories for recipe */
+-- count total calories for recipe 
 
--- create or replace view count_quantity as
+create or replace view count_quantity as
+select i.*, 
+(
+    case
+    when i.quantity like '%little%' then 0
+    when i.quantity like '% liter%' or i.quantity like '%lt%' then cast(i.quantity as int)*1000
+    when i.quantity like '%milliliter%' or i.quantity like '%ml%' then cast(i.quantity as int)
+    when i.quantity like '%deciliter%' or i.quantity like '%dl%' then cast(i.quantity as int)*100
+    when i.quantity like '%centiliter%' or i.quantity like '%cl%' then cast(i.quantity as int)*10
+    when i.quantity like '%teaspoon%' then cast(i.quantity as int)*5
+    when i.quantity like '%tablespoon%' then cast(i.quantity as int)*15
+    when i.quantity like '%cup%' then cast(i.quantity as int)*250
+    when i.quantity like '%pint%' then cast(i.quantity as int)*473
+    when i.quantity like '%quart%' then cast(i.quantity as int)*947
+    when i.quantity like '%gallon%' then cast(i.quantity as int)*3785
+    else cast(i.quantity as int) end
+) as quant_int
+from recipe_ingredients i;
+    
 
+create or replace view count_cal as
+select r.recipe_id, sum(i.calories * r.quant_int)/1000 as total_calories
+from ingredients i inner join count_quantity r using(ingredient_id)
+group by r.recipe_id;
 
--- create or replace view count_cal as
--- select sum(i.calories * r_i.quantity)
--- from ingredients i inner join recipe_ingredients r_i using(ingredient_id)
--- group by r_i.recipe_id;
 
 -- experience of chef in integer
 create or replace view exp_value as

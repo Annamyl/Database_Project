@@ -2,8 +2,7 @@ drop database if exists competition;
 create database competition;
 use competition;
 
------------------Entities-----------------
-------------------------------------------
+-- Entities
 
 create table cuisine (
 	cuisine_id int unsigned not null auto_increment,
@@ -74,6 +73,7 @@ create table equipment (
 create table food_groups (
 	group_id int unsigned not null auto_increment,
 	group_name varchar(45) not null,
+	rec_category varchar(45) not null,
 	summary varchar(300) not null,
 	group_image varchar(45) not null,
 	image_description varchar(150) not null,
@@ -139,24 +139,23 @@ create table episode_entry (
 	recipe_id int unsigned not null,
 	cuisine_id int unsigned not null,													
 	user_id int unsigned not null,
-	primary	 key (entry_id),
+	primary	key (entry_id),
 	constraint fk_recipe_entry foreign key (recipe_id) references recipe (recipe_id) on delete cascade on update cascade,
 	constraint fk_cuisine_entry foreign key (cuisine_id) references cuisine (cuisine_id) on delete cascade on update cascade,
-	constraint fk_chef_entry foreign key (user_id) references users (user_id) on delete cascade on update cascade,
+	constraint fk_chef_entry foreign key (user_id) references chefs (user_id) on delete cascade on update cascade,
 	constraint fk_episode_entry foreign key (episode_id) references episode (episode_id) on delete cascade on update cascade
 );
 
 create table judges (
+	-- judge_id int unsigned not null auto_increment,
 	episode_id int unsigned not null,
-	judge_id int unsigned not null auto_increment,
 	user_id int unsigned not null,
-	primary key (judge_id),
-	constraint fk_chef_judge foreign key (user_id) references users (user_id) on delete cascade on update cascade,
+	primary key (episode_id, user_id),
+	constraint fk_chef_judge foreign key (user_id) references chefs (user_id) on delete cascade on update cascade,
 	constraint fk_episode_judge foreign key (episode_id) references episode (episode_id) on delete cascade on update cascade
 );
 
---------------Relationships----------------
--------------------------------------------
+-- Relationships
 
 create table score (
 	entry_id int unsigned not null,
@@ -179,7 +178,7 @@ create table chef_cuisine (
 	user_id int unsigned not null,
 	cuisine_id int unsigned not null,
 	primary key (user_id, cuisine_id),
-	constraint fk_chef_cuis foreign key (user_id) references users (user_id) on delete cascade on update cascade,
+	constraint fk_chef_cuis foreign key (user_id) references chefs (user_id) on delete cascade on update cascade,
 	constraint fk_cuisine_chef foreign key (cuisine_id) references cuisine (cuisine_id) on delete cascade on update cascade
 );
 
@@ -194,6 +193,7 @@ create table recipe_themes (
 create table recipe_ingredients (
 	recipe_id int unsigned not null,
 	ingredient_id int unsigned not null,
+	main_ingr bit(1) not null,
 	quantity varchar(45) not null,
 	primary key (recipe_id, ingredient_id),
 	constraint fk_recipe_ingr foreign key (recipe_id) references recipe (recipe_id) on delete cascade on update cascade,
@@ -216,12 +216,24 @@ create table recipe_tag (
 	constraint fk_tag_recipe foreign key (tag_id) references tags (tag_id) on delete cascade on update cascade
 );
 
+-- Indexes
 
---------------Triggers------------------
-----------------------------------------
+-- 3.10, 3.12 
+create index idx_year on episode (ep_year);
 
----max 3 tips per recipe
+-- 3.3
+create index idx_birth_date on chefs (date_of_birth);
 
+-- 3.13, find winner
+create index idx_prof on chefs (profession_info);
+
+-- count_cal
+create index idx_quant on recipe_ingredients (quantity);
+
+
+-- Triggers
+
+-- max 3 tips per recipe
 delimiter $$
 create trigger chk_tips_per_ep before insert on tips
 for each row
@@ -234,8 +246,7 @@ begin
 end $$
 
 
----max 10 contestants per episode
-
+-- max 10 entries per episode
 create trigger chk_entries_per_ep before insert on episode_entry
 for each row
 begin	
@@ -246,7 +257,7 @@ begin
 	end if;
 end $$
 
----max 3 judges per episode
+-- max 3 judges per episode
 create trigger chk_judges_per_ep before insert on judges
 for each row
 begin
@@ -257,7 +268,7 @@ begin
 	end if;
 end $$
 
----up to 3 consecutive appearances of chef in episodes (as contestant)
+-- up to 3 consecutive appearances of chef in episodes (as contestant)
 create trigger chk_chef_ep before insert on episode_entry
 for each row
 begin
@@ -270,15 +281,6 @@ begin
 			end if;
 		end if;
 	end if;
-	end if;
-end $$
-
----chef and recipe -> same cuisine_id as choosen in episode_entry
-create trigger chk_chef_ep_entry before insert on episode_entry
-for each row
-begin
-	if exists (select 1 from episode_entry where new.user_id = user_id and new.episode_id = episode_id) then
-	signal sqlstate '45000';
 	end if;
 end $$
 

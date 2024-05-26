@@ -1,6 +1,8 @@
+-- on call procedure user needs to give url for image and image description
+
 drop procedure if exists new_episode;
 delimiter $$
-create procedure new_episode ()
+create procedure new_episode (im varchar(45), im_desc varchar(150))
 begin
     declare ep_id int;
     declare id int;
@@ -21,7 +23,7 @@ begin
         set ep_y = ep_y + 1;
     end if;
 
-    insert into episode (ep_year, episode_image, image_description) values (ep_y, "fsafaf", "fsgahash");
+    insert into episode (ep_year, episode_image, image_description) values (ep_y, im, im_desc);
     set ep_id = (select count(*) from episode);
 
     /*not more than 3 consecutive appearances in one season*/
