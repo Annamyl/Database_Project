@@ -8,9 +8,9 @@ fake = Faker()
 fake.add_provider(FoodProvider)
 
 Recipes_const = 60
-Users_const = 50
-Ingr_const = 100
-Episodes_const = 50
+Users_const = 60
+Ingr_const = 110
+Episodes_const = 60
 Cuis_const = 20
 Equip_const = 20
 Theme_const = 15
@@ -159,7 +159,7 @@ for id in range(1, Equip_const+1):
 
 for id in range(1, Users_const+1):
     username = fake.unique.user_name()
-    password = fake.text(max_nb_chars=15)
+    password = fake.password()
     script += f'INSERT INTO users (username, pass_word) VALUES ("{username}", "{password}");\n'
     
     # name = fake.unique.name()
